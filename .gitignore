@@ -29,3 +29,6 @@ paper/notes/*
 # Jupyter
 .ipynb_checkpoints/
 
+!paper/figs/*.png
+!paper/tables/*.csv
+!paper/notes/*.md

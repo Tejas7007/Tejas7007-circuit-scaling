@@ -1,39 +1,42 @@
-# Circuit-Scaling: Cross-Family Mechanistic Analysis of IOI vs Anti-Repeat Transformer Heads
+# Circuit-Scaling: How Transformer Circuits Evolve with Model Size
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 **Author:** Tejas Dahiya (University of Wisconsin–Madison)  
-**Status:** Research in progress — targeting submission to a Tier-1 ML conference (NeurIPS / ICLR / ICML)
+**Status:** Research in progress — targeting submission to NeurIPS / ICLR / ICML
+
+> A cross-size, cross-family causal analysis showing how functional transformer circuits (IOI, Anti-Repeat, Copy-Suppression) strengthen, migrate, and organize as model size increases from 70M → 1B+ parameters.
 
 ---
 
 ## Overview
 
-This repository contains the complete codebase, datasets, figures, and analysis for a mechanistic-interpretability study exploring:
+Most interpretability research analyzes only a single model size (e.g., GPT-2 Small). This project answers a deeper question:
 
-> **"How do transformer attention heads scale across families when performing IOI (Indirect Object Identification) vs Anti-Repeat suppression?"**
+> **Do functional transformer circuits persist, strengthen, or reorganize as model size increases?**
 
-Across **GPT-2**, **Pythia**, **OPT**, and **GPT-Neo**, we identify and classify attention heads into four categories:
+We study scaling behavior across **GPT-2**, **Pythia**, **GPT-Neo**, and **OPT** families, focusing on:
 
-| Category | Description |
-|----------|-------------|
-| **IOI-only** | Heads that primarily contribute to indirect object identification |
-| **Anti-repeat-only** | Heads specialized for copy suppression / anti-repetition |
-| **Shared dual-function** | Heads exhibiting both IOI and anti-repeat behavior |
-| **Weak** | Heads with minimal functional contribution |
+- **IOI (Induction-like) heads** — Indirect Object Identification circuits
+- **Anti-Repeat / Copy-Suppression heads** — Repetition inhibition mechanisms
+- **Shared directional heads** — Dual-function attention patterns
+- **Layer migration across sizes** — How circuits relocate with scale
+- **Causal functional validation** — Directional influence verification
+- **Novel ablation tests** — Hero-Heads vs Random Heads comparison
 
-We compute cross-family scaling laws, generate full head-level phase plots, perform causal-tracing validation, and introduce a novel **hero-head ablation vs random ablation** experiment demonstrating that functional heads cause meaningful directional effects while random heads do not.
+All experiments conducted using [TransformerLens](https://github.com/neelnanda-io/TransformerLens).
 
 ---
 
 ## Key Findings
 
-This work presents three novel contributions not found in existing literature:
-
-1. **Cross-family IOI ↔ Anti-Repeat scaling laws** — Correlation patterns evolve predictably with model scale
-2. **Shared dual-function heads exist and scale** — A subset of heads perform both tasks, challenging single-function assumptions
-3. **Hero-head ablation vs random ablation** — Functional heads show significantly higher ablation impact than random baselines
+| Finding | Description |
+|---------|-------------|
+| 🔬 **Cross-family scaling laws** | IOI ↔ Anti-Repeat correlations evolve predictably with parameter count |
+| 🧠 **Dual-function heads exist** | A subset of heads perform both IOI and anti-repeat tasks |
+| 📈 **Strong heads get stronger** | Head magnitude scales with model size |
+| 🎯 **Hero-head ablation** | Functional heads show significantly higher ablation impact than random baselines |
 
 ---
 
@@ -41,213 +44,193 @@ This work presents three novel contributions not found in existing literature:
 
 ```
 circuit-scaling/
-├── scripts/                    # All experimental scripts
-│   ├── scan_logitdiff_copy_suppression.py
-│   ├── scan_logitdiff_anti_repeat.py
-│   ├── joint_ioi_anti_repeat_all.py
-│   ├── analyze_joint_ioi_anti_repeat_all.py
-│   ├── export_hero_heads_for_paper.py
-│   ├── summarize_head_categories.py
-│   ├── plot_layer_histograms_cross_family.py
-│   ├── plot_delta_scatter_all_heads.py
-│   ├── plot_shared_ioi_antionly_phase.py
-│   ├── plot_family_grid.py
-│   ├── plot_strong_head_scaling.py
-│   ├── causal_tracing_hero_heads.py
-│   ├── summarize_causal_tracing.py
-│   ├── ablate_hero_heads_vs_random.py
-│   └── summarize_ablation_results.py
-├── results/                    # Raw experimental outputs (JSON)
 ├── paper/
-│   ├── figs/                   # All generated figures
-│   ├── tables/                 # CSV data tables
-│   └── notes/                  # Paper outlines and findings
-├── requirements.txt
+│   ├── figs/           # All figures (PNG/PDF)
+│   ├── tables/         # CSV results from experiments
+│   └── notes/          # High-level findings & paper outline
+├── scripts/            # Experiment scripts
+├── src/                # Core analysis modules
+├── results/            # Raw pipeline outputs
+├── environment.yml     # Conda environment
 └── README.md
 ```
 
 ---
 
-## Quick Start
-
-### Installation
+## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/<username>/circuit-scaling.git
+git clone https://github.com/Tejas7007/circuit-scaling.git
 cd circuit-scaling
 
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+conda env create -f environment.yml
+conda activate circuit-scaling
 ```
 
-### Running the Full Pipeline
+---
 
+## Reproducing All Experiments
+
+### 1. IOI & Anti-Repeat Strength Scaling
 ```bash
-# 1. Logit-diff scanning
-python scripts/scan_logitdiff_copy_suppression.py --models gpt2 gpt2-medium gpt2-large
-python scripts/scan_logitdiff_anti_repeat.py --model gpt2-large
+python scripts/run_joint_head_scan.py
+```
 
-# 2. Merge into unified joint table
-python scripts/joint_ioi_anti_repeat_all.py
-python scripts/analyze_joint_ioi_anti_repeat_all.py
+### 2. Causal Tracing
+```bash
+python scripts/run_causal_tracing.py
+```
 
-# 3. Classify heads
-python scripts/export_hero_heads_for_paper.py --topk 3
-python scripts/summarize_head_categories.py
-
-# 4. Generate figures
-python scripts/plot_layer_histograms_cross_family.py
-python scripts/plot_delta_scatter_all_heads.py
-python scripts/plot_shared_ioi_antionly_phase.py
-python scripts/plot_family_grid.py
-python scripts/plot_strong_head_scaling.py
-
-# 5. Causal tracing validation
-python scripts/causal_tracing_hero_heads.py
-python scripts/summarize_causal_tracing.py
-
-# 6. Hero vs random ablation experiment
+### 3. Hero-Head Ablation (Novel)
+```bash
 python scripts/ablate_hero_heads_vs_random.py
 python scripts/summarize_ablation_results.py
+```
+
+### 4. Generate Tables & Figures
+```bash
+python scripts/summarize_head_categories.py
+python scripts/summarize_scaling_correlations.py
 ```
 
 ---
 
 ## Figures
 
-All figures are stored in `paper/figs/`. Below is a gallery of key visualizations:
+All figures stored in `paper/figs/`.
 
-### Cross-Family Correlation vs Model Scale
+### 1. Cross-Family Correlation vs Model Size
 
-![Cross-Family Correlation](paper/figs/cross_family_correlation_vs_scale.png)
+Shows how IOI ↔ Anti-Repeat correlations evolve across GPT-2, GPT-Neo, Pythia, and OPT.
 
-Shows how IOI ↔ Anti-Repeat head correlations evolve with parameter count across GPT-2, Pythia, GPT-Neo, and OPT.
+![Cross-Family Correlation](./paper/figs/corr_vs_scale_cross_family.png)
 
-### Strong Head Scaling Law
+### 2. Strong Head Scaling Law
 
-![Strong Head Scaling](paper/figs/strong_head_scaling.png)
+Demonstrates that strong heads become stronger, sharper, and more numerous with scale.
 
-Demonstrates how the magnitude of strong heads grows with model scale — a previously unreported phenomenon.
+![Strong Head Scaling](./paper/figs/strong_head_scaling.png)
 
-### Phase-Space Plot of All Heads
+### 3. Phase-Space Plot Across All Heads (720+)
 
-![Phase Space](paper/figs/phase_space_all_heads.png)
+A unified 2D projection of all heads: IOI-dominant, Anti-Repeat dominant, Shared, and Weak.
 
-Visualizes clustering of head behaviors across all models into four categories: IOI dominant, Anti-Repeat dominant, Shared, and Weak.
+![Phase Space](./paper/figs/all_heads_phase_space.png)
 
-### Family-Grid Visualization
+### 4. Family-Grid Visualization
 
-![Family Grid](paper/figs/family_grid.png)
+Each subplot contains hundreds of heads mapped into ΔIOI vs ΔAnti-repeat space.
 
-Unified comparison of head distributions across all studied model families.
+![Family Grid](./paper/figs/family_grid.png)
 
-### Per-Model Layer Histograms
+### 5. Per-Model Layer Histograms
 
-| GPT-2 Small | GPT-2 Medium | GPT-2 Large |
-|-------------|--------------|-------------|
-| ![](paper/figs/layer_histogram_gpt2.png) | ![](paper/figs/layer_histogram_gpt2-medium.png) | ![](paper/figs/layer_histogram_gpt2-large.png) |
+| GPT-Neo-125M | GPT-2 |
+|:------------:|:-----:|
+| ![GPT-Neo-125M](./paper/figs/layer_hist_gpt-neo_gpt-neo-125M.png) | ![GPT-2](./paper/figs/layer_hist_gpt2_gpt2.png) |
 
-### ΔIOI vs ΔAnti Scatter Plots
+| GPT-2 Medium | GPT-2 Large |
+|:------------:|:-----------:|
+| ![GPT-2 Medium](./paper/figs/layer_hist_gpt2_gpt2-medium.png) | ![GPT-2 Large](./paper/figs/layer_hist_gpt2_gpt2-large_tau003.png) |
 
-![Pythia-1B Scatter](paper/figs/scatter_pythia-1b.png)
+| Pythia-70M | Pythia-160M | Pythia-410M | Pythia-1B |
+|:----------:|:-----------:|:-----------:|:---------:|
+| ![Pythia-70M](./paper/figs/layer_hist_pythia_pythia-70m.png) | ![Pythia-160M](./paper/figs/layer_hist_pythia_pythia-160m.png) | ![Pythia-410M](./paper/figs/layer_hist_pythia_pythia-410m.png) | ![Pythia-1B](./paper/figs/layer_hist_pythia_pythia-1b.png) |
 
-*Example: Pythia-1B. All models available in `paper/figs/`.*
+| OPT-125M |
+|:--------:|
+| ![OPT-125M](./paper/figs/layer_hist_opt_opt-125m.png) |
 
-### Causal Tracing Validation
+### 6. ΔIOI vs ΔAnti Scatter Plots
+
+| GPT-2 | GPT-2 Medium | GPT-2 Large |
+|:-----:|:------------:|:-----------:|
+| ![GPT-2](./paper/figs/gpt2_gpt2_delta_scatter.png) | ![GPT-2 Medium](./paper/figs/gpt2_gpt2-medium_delta_scatter.png) | ![GPT-2 Large](./paper/figs/gpt2_gpt2-large_delta_scatter.png) |
+
+| Pythia-70M | Pythia-160M | Pythia-410M | Pythia-1B |
+|:----------:|:-----------:|:-----------:|:---------:|
+| ![Pythia-70M](./paper/figs/pythia_pythia-70m_delta_scatter.png) | ![Pythia-160M](./paper/figs/pythia_pythia-160m_delta_scatter.png) | ![Pythia-410M](./paper/figs/pythia_pythia-410m_delta_scatter.png) | ![Pythia-1B](./paper/figs/pythia_pythia-1b_delta_scatter.png) |
+
+| GPT-Neo-125M | OPT-125M |
+|:------------:|:--------:|
+| ![GPT-Neo-125M](./paper/figs/gpt-neo_gpt-neo-125M_delta_scatter.png) | ![OPT-125M](./paper/figs/opt_opt-125m_delta_scatter.png) |
+
+### 7. Causal Tracing Validation
+
+Causally validates directional influence of strong heads.
 
 | IOI Causal Tracing | Anti-Repeat Causal Tracing |
-|--------------------|----------------------------|
-| ![](paper/figs/causal_ioi.png) | ![](paper/figs/causal_anti.png) |
+|:------------------:|:--------------------------:|
+| ![IOI Causal](./paper/figs/hero_head_causal_scatter_ioi.png) | ![Anti Causal](./paper/figs/hero_head_causal_scatter_anti.png) |
 
-Validates that strong heads shape IOI / Anti-Repeat behavior directionally.
+### 8. Hero-Head vs Random Ablation (Novel Experiment)
 
-### Hero-Head vs Random Head Ablation (Novel)
+Ablating identified "hero heads" causes a predictable performance drop, unlike random heads — strong evidence of functional circuits.
 
-![Hero vs Random Ablation](paper/figs/hero_vs_random_ablation.png)
-
-Demonstrates that ablating key "hero heads" reduces performance much more predictably than ablating random heads — strong evidence of functional circuits.
+![Hero vs Random Ablation](./paper/figs/gpt2_gpt2-large_hero_vs_random_ablation.png)
 
 ---
 
 ## Data Tables
 
-All tables are stored in `paper/tables/`:
-
-| File | Description |
-|------|-------------|
-| `joint_ioi_anti_repeat_all.csv` | Unified ΔIOI and ΔAnti for every head across every model |
-| `hero_heads_for_paper.csv` | Top functional heads with category classification |
-| `head_category_summary.csv` | Cross-family distribution of head types |
-| `hero_head_causal_summary.csv` | Causal tracing influence results merged with head strengths |
-| `hero_vs_random_ablation_summary.csv` | Ablation curves for GPT-2-large |
-
----
-
-## Experimental Pipeline
-
-### 1. Logit-Diff Scanning (IOI + Anti-Repeat)
-
-Computes head-level deltas measuring each attention head's contribution to IOI and anti-repeat tasks. Outputs JSON files to `results/`.
-
-### 2. Joint Table Construction
-
-Merges IOI and anti-repeat metrics into a unified analysis table (`joint_ioi_anti_repeat_all.csv`).
-
-### 3. Head Classification
-
-Categorizes heads based on their ΔIOI and ΔAnti scores into IOI-only, Anti-only, Shared, or Weak.
-
-### 4. Visualization Generation
-
-Produces layer histograms, scatter plots, phase-space diagrams, and scaling law figures.
-
-### 5. Causal Tracing Validation
-
-Validates that identified strong heads causally influence model outputs on IOI and anti-repeat benchmarks.
-
-### 6. Hero-Head vs Random Ablation
-
-Novel experiment comparing the impact of ablating functionally important heads versus random head selections.
-
----
-
-## Paper Outline
-
-Detailed notes are available in `paper/notes/`:
-
-- `results_outline.md` — Full results structure
-- `high_level_findings.md` — Summary of key discoveries
-- `hero_heads.md` — Analysis of top functional heads
-
-### Recommended Paper Structure
-
-1. Introduction
-2. Related Work
-3. Methodology
-4. Head Classification Pipeline
-5. Cross-Family Scaling Laws
-6. Phase-Space of Attention Head Functions
-7. Causal Tracing Validation
-8. Hero-Head vs Random Ablation Experiment
-9. Discussion
-10. Limitations & Future Work
-11. Conclusion
+```
+paper/tables/
+├── corr_vs_scale_cross_family.csv      # Correlation scaling data
+├── head_category_summary.csv           # Head type distributions
+├── hero_head_causal_summary.csv        # Causal tracing + head strengths
+├── hero_heads_for_paper.csv            # Top functional heads classified
+├── hero_vs_random_ablation_summary.csv # Ablation experiment results
+└── joint_ioi_anti_repeat_heads.csv     # Unified ΔIOI and ΔAnti metrics
+```
 
 ---
 
 ## Models Studied
 
-| Family | Models |
-|--------|--------|
-| **GPT-2** | gpt2, gpt2-medium, gpt2-large, gpt2-xl |
-| **Pythia** | pythia-70m, pythia-160m, pythia-410m, pythia-1b, pythia-1.4b, pythia-2.8b |
-| **OPT** | opt-125m, opt-350m, opt-1.3b, opt-2.7b |
-| **GPT-Neo** | gpt-neo-125m, gpt-neo-1.3b, gpt-neo-2.7b |
+| Family | Models | Parameters |
+|--------|--------|------------|
+| **GPT-2** | gpt2, gpt2-medium, gpt2-large, gpt2-xl | 124M – 1.5B |
+| **Pythia** | pythia-70m, pythia-160m, pythia-410m, pythia-1b, pythia-1.4b, pythia-2.8b | 70M – 2.8B |
+| **OPT** | opt-125m, opt-350m, opt-1.3b, opt-2.7b | 125M – 2.7B |
+| **GPT-Neo** | gpt-neo-125m, gpt-neo-1.3b, gpt-neo-2.7b | 125M – 2.7B |
+
+---
+
+## Paper Outline
+
+### 1. Introduction
+- Why scaling analysis matters for interpretability
+- Gap in existing literature
+- Contributions
+
+### 2. Methods
+- Head influence metrics (ΔIOI, ΔAnti construction)
+- Causal tracing framework
+- Ablation methodology
+- Cross-family comparison approach
+
+### 3. Results
+- Scaling law for head strength
+- Migration of IOI/Anti heads across layers
+- Cross-family conservation patterns
+- Phase-space clustering
+- Causal directional influence
+- Novel ablation: Hero-Heads vs Random
+
+### 4. Discussion
+- Circuit specialization with scale
+- Emergence of strong inhibitory heads
+- Implications for mechanistic interpretability
+
+### 5. Limitations
+
+### 6. Future Work
+- Extension to modern models (Llama-3.x, Gemma)
+- SAE-aligned feature scaling
+- Induction/copy-suppression interaction analysis
+
+### 7. Appendix
+- All figures, tables, prompt templates, hyperparameters
 
 ---
 
@@ -255,11 +238,11 @@ Detailed notes are available in `paper/notes/`:
 
 ```bibtex
 @misc{dahiya2025circuitscaling,
-  author = {Dahiya, Tejas},
-  title = {Circuit-Scaling: Cross-Family Mechanistic Analysis of IOI vs Anti-Repeat Transformer Heads},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/<username>/circuit-scaling}
+  author       = {Dahiya, Tejas},
+  title        = {Circuit-Scaling: How Transformer Circuits Evolve with Model Size},
+  year         = {2025},
+  publisher    = {GitHub},
+  howpublished = {\url{https://github.com/Tejas7007/circuit-scaling}}
 }
 ```
 
@@ -267,13 +250,11 @@ Detailed notes are available in `paper/notes/`:
 
 ## Acknowledgements
 
-This repository builds on:
-
 - [TransformerLens](https://github.com/neelnanda-io/TransformerLens) (Nanda et al.)
-- [HuggingFace Transformers](https://huggingface.co/) for model access (Pythia, GPT-2, OPT, GPT-Neo)
+- [HuggingFace Transformers](https://huggingface.co/) for model weights
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.

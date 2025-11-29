@@ -1,0 +1,98 @@
+# Circuit Scaling: How Transformer Circuits Evolve with Model Size
+
+**One‑liner:** A cross‑size, cross‑species causal map of two underexplored mechanisms in transformers — **copy‑suppression** (inhibitory heads) and **subject–verb agreement (SVA)** — with IOI/induction used only as **methodological controls**.
+
+## Motivation
+Almost all circuit analyses probe a **single** model size (often GPT‑2 small). We ask: **Do circuits persist, migrate, or reorganize as models scale?** If conserved, interpretability may **generalize** across families. If reorganized, we learn **why** bigger models generalize better.
+
+## Targets (ranked)
+1. **Copy‑suppression (“negative”) heads** — hypothesized to inhibit tempting-but-wrong continuations. *Novel centerpiece.*
+2. **Subject‑Verb Agreement (SVA)** — circuits that carry subject number and select the correct verb form. *Primary science angle.*
+3. **IOI / Induction** — replicated briefly as **controls** for methods validation.
+
+## Model Suites
+- **Primary (clean scaling):** *Pythia* 70M → 12B (same data/order; ideal for scaling comparisons).
+- **Cross‑species checks:** GPT‑2 (S→XL) and a modern open model (e.g., Llama‑3.x‑3B/8B).
+
+## Methods
+- **Localization:** head ranking by behavioral signature (e.g., reduced wrong‑copy logit for copy‑suppression; DLA at verb for SVA).
+- **Causal tests:** head ablation, activation/path patching; (optional) causal scrubbing.
+- **Cross‑size alignment:** QK/OV subspace similarity (CCA/Procrustes), attention‑pattern correlation, bipartite head matching.
+- **Behavioral linkage:** regress *circuit strength* → *task accuracy* per size.
+- **SAEs (stretch):** align sparse features across sizes to test feature‑level conservation.
+
+## Repo Layout
+```
+circuit-scaling/
+├─ README.md
+├─ LICENSE
+├─ CITATION.cff
+├─ .gitignore
+├─ environment.yml
+├─ pyproject.toml
+├─ Makefile
+├─ src/circuitscaling/
+│  ├─ __init__.py
+│  ├─ datasets.py            # IOI templates, SVA minimal pairs, synthetic deceptive repeats
+│  ├─ models.py              # model loading (Pythia/GPT‑2/Llama), hooks, utils
+│  ├─ scoring.py             # head ranking metrics for copy‑suppression & SVA
+│  ├─ patching.py            # activation/path patching helpers (TransformerLens)
+│  ├─ alignment.py           # head alignment (QK/OV CCA), attention corr, bipartite matching
+│  ├─ metrics.py             # Δloss attribution, DLA, report builders
+│  ├─ viz.py                 # plots for layer migration, attribution vs size
+│  └─ utils.py               # config, caching, reproducibility
+├─ scripts/
+│  ├─ run_copy_suppression_scan.py
+│  ├─ run_sva_scan.py
+│  ├─ run_ioi_control.py
+│  └─ align_heads_across_sizes.py
+├─ notebooks/
+│  ├─ 01_copy_suppression_exploration.ipynb   # optional
+│  ├─ 02_sva_exploration.ipynb                # optional
+│  └─ 03_alignment_reports.ipynb              # optional
+├─ data/                # (generated) prompts, results, caches
+├─ results/             # figures, tables
+└─ tests/
+   ├─ test_datasets.py
+   ├─ test_scoring.py
+   └─ test_alignment.py
+```
+
+## Quickstart
+```bash
+# 1) Create env
+conda env create -f environment.yml
+conda activate circuit-scaling
+
+# 2) (Optional) Enable HuggingFace caching
+export HF_HOME=$HOME/.cache/huggingface
+export TRANSFORMERS_CACHE=$HF_HOME/transformers
+
+# 3) Copy‑suppression head scan on Pythia 410M / 1B / 2.8B
+python scripts/run_copy_suppression_scan.py --models pythia-410m pythia-1b pythia-2.8b --n_prompts 2000
+
+# 4) SVA scan
+python scripts/run_sva_scan.py --models pythia-410m pythia-1b pythia-2.8b --n_prompts 5000
+
+# 5) Cross‑size alignment report
+python scripts/align_heads_across_sizes.py --feature copy_suppression --models pythia-410m pythia-1b pythia-2.8b
+```
+
+## Reproducibility
+- Deterministic seeds, pinned package versions, stored prompt dumps.
+- Each run writes a JSON summary to `results/` and plots to `results/figures/`.
+
+## Planned Experiments
+- **E1 (Main):** Copy‑suppression scaling on Pythia ladder → quantify head count, layer migration, Δloss attribution.
+- **E2 (Main):** SVA scaling on Pythia ladder → quantify DLA at verb, writer/reader sets, migration.
+- **E3 (Control):** IOI replication → validate pipeline; measure inhibitory coupling with main circuits.
+- **E4 (Species):** Replicate E1/E2 on GPT‑2 (S→XL) + Llama‑3.x‑3B/8B.
+- **E5 (Stretch):** SAE feature alignment across sizes.
+
+## Contributing
+See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. PRs welcome (notebooks, datasets, refactors, analyses).
+
+---
+
+*Maintainers:* Tejas Dahiya (UW‑Madison) & collaborators.  
+*License:* MIT.

@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it as below."
+title: "Circuit Scaling: How Transformer Circuits Evolve with Model Size"
+authors:
+  - family-names: Dahiya
+    given-names: Tejas
+date-released: 2025-11-06
+version: 0.1.0
+license: MIT

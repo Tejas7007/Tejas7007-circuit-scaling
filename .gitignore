@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Large model caches
+~/.cache/
+cache/
+**/model_cache/
+
+# Results (keep only curated ones)
+results/**/*
+!results/causal_tracing/*
+!results/ablation/*
+!results/summaries/*
+
+# MacOS junk
+.DS_Store
+
+# Figures
+paper/figs/*
+paper/tables/*
+paper/notes/*
+
+# Jupyter
+.ipynb_checkpoints/
+

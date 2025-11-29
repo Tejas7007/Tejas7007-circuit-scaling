@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "circuitscaling"
+version = "0.1.0"
+description = "Scaling behavior of transformer circuits (copy-suppression, SVA)"
+authors = [{name="Tejas Dahiya"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"

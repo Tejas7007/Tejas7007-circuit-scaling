@@ -1,96 +1,98 @@
-#!/usr/bin/env python
 import argparse
-import numpy as np
 import torch
-import matplotlib.pyplot as plt
+
 from transformer_lens import HookedTransformer
 
-# --------- Simple built-in IOI dataset (no external imports) ----------
 
-NAMES = [
-    "John", "Mary",
-    "Alice", "Bob",
-    "Tom", "Sarah",
-    "David", "Emma",
-    "James", "Olivia",
-    "Michael", "Sophia",
-    "Robert", "Isabella",
-    "William", "Ava",
-    "Joseph", "Mia",
-    "Charles", "Emily",
-]
+def build_prompts():
+    """
+    Simple, hand-crafted prompts for the two behaviors.
 
-TEMPLATE = "{A} and {B} went to the store. {A} gave a book to {B} because "
+    IOI-style: ambiguous pronoun / object choice where copy suppression matters.
+    Anti-repeat: contexts where repeating the previous token is bad.
+    """
+    ioi_prompts = [
+        "When John and Mary went to the store, John gave a book to",
+        "Alice and Bob walked into the office. Alice thanked",
+        "Sarah met David at the park, and Sarah spoke to",
+        "Tom and Emma were arguing because Tom insulted",
+    ]
 
-def build_ioi_prompts(max_prompts: int = 128):
-    prompts = []
-    for i, A in enumerate(NAMES):
-        for j, B in enumerate(NAMES):
-            if i == j:
-                continue
-            prompts.append(TEMPLATE.format(A=A, B=B))
-    return prompts[:max_prompts]
+    anti_repeat_prompts = [
+        "The word is cat, not",
+        "The answer is blue, not",
+        "He said hello, not",
+        "The password is secret, not",
+    ]
 
-# ---------------------------------------------------------------------
+    return ioi_prompts, anti_repeat_prompts
+
+
+def print_head_pattern(model, toks, layer, head, label, k=7):
+    """
+    For a batch of prompts, print the top-k attention targets
+    of (layer, head) for the *last* token in each sequence.
+    """
+    _, cache = model.run_with_cache(
+        toks,
+        names_filter=[f"blocks.{layer}.attn.hook_pattern"],
+        return_type="logits",
+    )
+    pattern = cache[f"blocks.{layer}.attn.hook_pattern"]  # [batch, heads, q, k]
+    # take the last query position (q = last token)
+    head_pattern = pattern[:, head, -1, :]  # [batch, seq]
+
+    print(f"\n=== {label}: layer {layer}, head {head} ===")
+    for i in range(head_pattern.shape[0]):
+        attn = head_pattern[i]  # [seq]
+        # Get top-k attention positions
+        k_eff = min(k, attn.shape[0])
+        vals, idxs = torch.topk(attn, k=k_eff)
+        vals = vals.tolist()
+        idxs = idxs.tolist()
+
+        # Get string tokens for this prompt
+        # (re-tokenize to keep it simple)
+        # Note: prepend_bos=True to match toks
+        prompt_str = model.to_str_tokens(
+            model.to_string(toks[i]),
+            prepend_bos=True,
+        )
+
+        print(f"\nPrompt {i+1}:")
+        print("  Text:", model.to_string(toks[i]))
+        print("  Top attention targets for last token:")
+        for pos, weight in zip(idxs, vals):
+            tok_str = prompt_str[pos] if pos < len(prompt_str) else "<out-of-range>"
+            print(f"    pos {pos:2d}  token={tok_str!r}  attn={weight:.3f}")
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, required=True)
+    parser.add_argument("--model", type=str, required=True, help="e.g. pythia-70m")
     parser.add_argument("--layer", type=int, required=True)
     parser.add_argument("--head", type=int, required=True)
-    parser.add_argument("--out", type=str, required=True)
-    parser.add_argument("--device", type=str, default=None)
-    parser.add_argument("--k", type=int, default=None, help="(unused, kept for backward compat)")
+    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--k", type=int, default=7, help="top-k attention positions to print")
     args = parser.parse_args()
 
-    # Choose device: prefer mps if available, then cuda, else cpu
-    if args.device is not None:
-        device = args.device
-    else:
-        if torch.backends.mps.is_available():
-            device = "mps"
-        elif torch.cuda.is_available():
-            device = "cuda"
-        else:
-            device = "cpu"
+    model_name = f"EleutherAI/{args.model}-deduped"
 
-    print(f"[INFO] Loading model {args.model} on {device}")
-    model = HookedTransformer.from_pretrained(args.model, device=device)
-    model.eval()
+    print(f"Loading {model_name} on {args.device} ...")
+    model = HookedTransformer.from_pretrained(model_name, device=args.device)
 
-    prompts = build_ioi_prompts(max_prompts=128)
-    print(f"[INFO] Built {len(prompts)} IOI prompts.")
+    ioi_prompts, anti_prompts = build_prompts()
 
-    # Batch all prompts at once
-    tokens = model.to_tokens(prompts, prepend_bos=True).to(device)
+    # IOI batch
+    ioi_toks = model.to_tokens(ioi_prompts, prepend_bos=True)
+    print_head_pattern(model, ioi_toks, args.layer, args.head, label="IOI", k=args.k)
 
-    hook_name = f"blocks.{args.layer}.attn.hook_pattern"
+    # Anti-repeat batch
+    anti_toks = model.to_tokens(anti_prompts, prepend_bos=True)
+    print_head_pattern(model, anti_toks, args.layer, args.head, label="Anti-repeat", k=args.k)
 
-    # run_with_cache returns (output, cache); we DON'T pass cache=...
-    _, cache = model.run_with_cache(
-        tokens,
-        names_filter=lambda name: name == hook_name,
-        return_type="logits",
-    )
-
-    attn = cache[hook_name]  # [batch, n_heads, q, k]
-
-    # Take the specified head and average across prompts
-    attn_head = attn[:, args.head, :, :]          # [batch, q, k]
-    avg_attn = attn_head.mean(dim=0).detach().to("cpu").numpy()  # [q, k]
-
-    plt.figure(figsize=(7, 5))
-    im = plt.imshow(avg_attn, aspect="auto")
-    plt.colorbar(im, label="Attention weight")
-    plt.xlabel("Key / destination token position")
-    plt.ylabel("Query / source token position")
-    plt.title(f"{args.model} — L{args.layer}H{args.head} avg attention (IOI prompts)")
-    plt.tight_layout()
-    plt.savefig(args.out, dpi=240)
-    plt.close()
-
-    print(f"[OUT] Saved attention map to {args.out}")
 
 if __name__ == "__main__":
     main()
+
 

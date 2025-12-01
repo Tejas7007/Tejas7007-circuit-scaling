@@ -1,0 +1,69 @@
+[INFO] Starting full circuit-transfer analysis batch...
+[INFO] Python: Python 3.13.9
+[INFO] PWD: /Users/tejas/Downloads/circuit-scaling
+[STEP 1] IOI head transfer Pythia → GPT-2
+Wrote transfer table to results/transfer/ioi_transfer_pythia410m_to_gpt2medium.csv
+
+Base hero IOI heads (top K)  : 20
+Mean |Δ_ioi| in base model    : 0.257
+Mean |Δ_ioi| in target model  : 0.009
+Using per-head table: paper/tables/joint_ioi_anti_repeat_heads.csv
+Pairs:
+  pythia/pythia-70m  ->  pythia/pythia-160m
+  pythia/pythia-160m  ->  pythia/pythia-410m
+  pythia/pythia-410m  ->  pythia/pythia-1b
+  pythia/pythia-160m  ->  gpt-neo/gpt-neo-125M
+  pythia/pythia-160m  ->  opt/opt-125m
+  pythia/pythia-410m  ->  gpt2/gpt2-medium
+
+=== pythia/pythia-70m  →  pythia/pythia-160m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 8
+  Mean target frac rank      : 0.503  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  pythia/pythia-410m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 13
+  Mean target frac rank      : 0.441  (0=best, 1=worst)
+
+=== pythia/pythia-410m  →  pythia/pythia-1b ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 13
+  Mean target frac rank      : 0.757  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  gpt-neo/gpt-neo-125M ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 12
+  Mean target frac rank      : 0.543  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  opt/opt-125m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 17
+  Mean target frac rank      : 0.701  (0=best, 1=worst)
+
+=== pythia/pythia-410m  →  gpt2/gpt2-medium ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 15
+  Mean target frac rank      : 0.573  (0=best, 1=worst)
+
+Wrote generic IOI transfer table to results/transfer/ioi_transfer_generic.csv
+[STEP 2] Pythia internal baseline transfer
+[OUT] Wrote Pythia within-family baseline to results/pythia_internal_baseline.csv
+[OUT] Wrote human-readable baseline summary to results/pythia_internal_vs_cross_family_summary.txt
+
+=== SUMMARY (also saved to file) ===
+=== Pythia Within-Family Baseline vs Cross-Family Transfer ===
+Within-family (Pythia -> Pythia):
+  #pairs:              3
+  mean frac good IOI-like heads: 0.217 ± 0.104
+  mean |Δ IOI|:        0.126 ± 0.108
+  mean target frac rank: 0.567 ± 0.167
+
+Cross-family (Pythia -> non-Pythia):
+  #pairs:              3
+  mean frac good IOI-like heads: 0.167 ± 0.161
+  mean |Δ IOI|:        0.136 ± 0.178
+  mean target frac rank: 0.606 ± 0.084
+
+
+[STEP 3] Induction scores (Pythia + GPT-2)

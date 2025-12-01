@@ -1,0 +1,129 @@
+[INFO] Starting full circuit-transfer analysis batch...
+[INFO] Python: Python 3.11.0
+[INFO] PWD: /Users/tejas/Downloads/circuit-scaling
+[STEP 1] IOI head transfer Pythia → GPT-2
+Wrote transfer table to results/transfer/ioi_transfer_pythia410m_to_gpt2medium.csv
+
+Base hero IOI heads (top K)  : 20
+Mean |Δ_ioi| in base model    : 0.257
+Mean |Δ_ioi| in target model  : 0.009
+Using per-head table: paper/tables/joint_ioi_anti_repeat_heads.csv
+Pairs:
+  pythia/pythia-70m  ->  pythia/pythia-160m
+  pythia/pythia-160m  ->  pythia/pythia-410m
+  pythia/pythia-410m  ->  pythia/pythia-1b
+  pythia/pythia-160m  ->  gpt-neo/gpt-neo-125M
+  pythia/pythia-160m  ->  opt/opt-125m
+  pythia/pythia-410m  ->  gpt2/gpt2-medium
+
+=== pythia/pythia-70m  →  pythia/pythia-160m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 8
+  Mean target frac rank      : 0.503  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  pythia/pythia-410m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 13
+  Mean target frac rank      : 0.441  (0=best, 1=worst)
+
+=== pythia/pythia-410m  →  pythia/pythia-1b ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 13
+  Mean target frac rank      : 0.757  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  gpt-neo/gpt-neo-125M ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 12
+  Mean target frac rank      : 0.543  (0=best, 1=worst)
+
+=== pythia/pythia-160m  →  opt/opt-125m ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 17
+  Mean target frac rank      : 0.701  (0=best, 1=worst)
+
+=== pythia/pythia-410m  →  gpt2/gpt2-medium ===
+  Base IOI-like heads (top K): 20
+  Missing in target index    : 15
+  Mean target frac rank      : 0.573  (0=best, 1=worst)
+
+Wrote generic IOI transfer table to results/transfer/ioi_transfer_generic.csv
+[STEP 2] Pythia internal baseline transfer
+[OUT] Wrote Pythia within-family baseline to results/pythia_internal_baseline.csv
+[OUT] Wrote human-readable baseline summary to results/pythia_internal_vs_cross_family_summary.txt
+
+=== SUMMARY (also saved to file) ===
+=== Pythia Within-Family Baseline vs Cross-Family Transfer ===
+Within-family (Pythia -> Pythia):
+  #pairs:              3
+  mean frac good IOI-like heads: 0.217 ± 0.104
+  mean |Δ IOI|:        0.126 ± 0.108
+  mean target frac rank: 0.567 ± 0.167
+
+Cross-family (Pythia -> non-Pythia):
+  #pairs:              3
+  mean frac good IOI-like heads: 0.167 ± 0.161
+  mean |Δ IOI|:        0.136 ± 0.178
+  mean target frac rank: 0.606 ± 0.084
+
+
+[STEP 3] Induction scores (Pythia + GPT-2)
+[INFO] Loading model: pythia-160m
+Loaded pretrained model pythia-160m into HookedTransformer
+[INFO] Building induction dataset (n=64)...
+[INFO] Computing base margins...
+[INFO] Base mean induction margin: 0.3230
+[INFO] Scoring heads by ablation...
+[OUT] Wrote induction scores for pythia-160m to results/induction_head_scores_pythia-160m.csv
+[INFO] Loading model: gpt2-medium
+Loaded pretrained model gpt2-medium into HookedTransformer
+[INFO] Building induction dataset (n=64)...
+[INFO] Computing base margins...
+[INFO] Base mean induction margin: 1.2915
+[INFO] Scoring heads by ablation...
+[OUT] Wrote induction scores for gpt2-medium to results/induction_head_scores_gpt2-medium.csv
+[STEP 3] Induction head transfer Pythia → GPT-2
+[INFO] Loading base induction scores from results/induction_head_scores_pythia-160m.csv
+[INFO] Loading target induction scores from results/induction_head_scores_gpt2-medium.csv
+[OUT] Wrote induction transfer summary to results/induction_transfer_pythia160m_to_gpt2medium_summary.csv
+[OUT] Wrote aligned head details to results/induction_transfer_pythia160m_to_gpt2medium_heads.csv
+
+[HIGHLIGHT] Pythia-160M -> GPT-2-Medium induction transfer:
+n_heads: 20
+n_missing: 8
+frac_missing: 0.4
+mean_tgt_abs_delta_induction: 0.03305622115731236
+std_tgt_abs_delta_induction: 0.05895805214311758
+mean_tgt_frac_rank: 0.4618798955613578
+std_tgt_frac_rank: 0.3082964469933022
+[STEP 4] GPT-2 IOI global scan (heads + MLPs)
+[INFO] Loaded /Users/tejas/Downloads/circuit-scaling/results/global_ioi_circuit_gpt2-medium.csv
+[INFO] Columns: ['type', 'layer', 'head', 'mean_margin_ablated', 'mean_margin_base', 'delta_margin']
+[OUT] Wrote top-10 attention heads to /Users/tejas/Downloads/circuit-scaling/results/global_ioi_gpt2medium_top_heads.csv
+[OUT] Wrote top-10 mlp blocks to /Users/tejas/Downloads/circuit-scaling/results/global_ioi_gpt2medium_top_mlps.csv
+
+=== TOP ATTENTION HEADS ===
+type  layer  head  mean_margin_ablated  mean_margin_base  delta_margin  abs_effect
+attn      0     4            -0.078504         -0.058049     -0.020454    0.020454
+attn     23     5            -0.073236         -0.058049     -0.015186    0.015186
+attn      8     8            -0.073025         -0.058049     -0.014976    0.014976
+attn      0     2            -0.072128         -0.058049     -0.014079    0.014079
+attn      2    13            -0.071301         -0.058049     -0.013252    0.013252
+attn      8     4            -0.051368         -0.058049      0.006681    0.006681
+attn     12     6            -0.064719         -0.058049     -0.006670    0.006670
+attn      0     3            -0.064092         -0.058049     -0.006043    0.006043
+attn      0    11            -0.064055         -0.058049     -0.006006    0.006006
+attn      1     7            -0.052235         -0.058049      0.005814    0.005814
+
+=== TOP MLP BLOCKS ===
+type  layer  head  mean_margin_ablated  mean_margin_base  delta_margin  abs_effect
+ mlp      0    -1            -0.002782         -0.058049      0.055267    0.055267
+ mlp     21    -1            -0.037303         -0.058049      0.020746    0.020746
+ mlp      5    -1            -0.073286         -0.058049     -0.015237    0.015237
+ mlp     14    -1            -0.043443         -0.058049      0.014606    0.014606
+ mlp      1    -1            -0.045356         -0.058049      0.012693    0.012693
+ mlp     17    -1            -0.047188         -0.058049      0.010862    0.010862
+ mlp      6    -1            -0.068050         -0.058049     -0.010000    0.010000
+ mlp     15    -1            -0.049052         -0.058049      0.008997    0.008997
+ mlp     20    -1            -0.050674         -0.058049      0.007375    0.007375
+ mlp     23    -1            -0.051903         -0.058049      0.006146    0.006146
+[STEP 5A] CKA alignment Pythia410M ↔ GPT-2-Medium

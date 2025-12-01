@@ -1,0 +1,10 @@
+{"prompt": "The Eiffel Tower is located in ", "subject": "The Eiffel Tower is located in", "correct_object": "Paris", "distractors": ["London", "Berlin", "Rome"]}
+{"prompt": "The capital of France is ", "subject": "The capital of France is", "correct_object": "Paris", "distractors": ["Berlin", "Madrid", "Rome"]}
+{"prompt": "The capital of Japan is ", "subject": "The capital of Japan is", "correct_object": "Tokyo", "distractors": ["Seoul", "Beijing", "Osaka"]}
+{"prompt": "The capital of India is ", "subject": "The capital of India is", "correct_object": "New Delhi", "distractors": ["Mumbai", "Kolkata", "Chennai"]}
+{"prompt": "The Great Wall of China is located in ", "subject": "The Great Wall of China is located in", "correct_object": "China", "distractors": ["Japan", "Korea", "Vietnam"]}
+{"prompt": "Albert Einstein was born in ", "subject": "Albert Einstein was born in", "correct_object": "Ulm", "distractors": ["Berlin", "Vienna", "Zurich"]}
+{"prompt": "Marie Curie was born in ", "subject": "Marie Curie was born in", "correct_object": "Warsaw", "distractors": ["Paris", "London", "Prague"]}
+{"prompt": "Isaac Newton was born in ", "subject": "Isaac Newton was born in", "correct_object": "Woolsthorpe", "distractors": ["London", "Cambridge", "Oxford"]}
+{"prompt": "The tallest mountain in the world is ", "subject": "The tallest mountain in the world is", "correct_object": "Mount Everest", "distractors": ["K2", "Kangchenjunga", "Makalu"]}
+{"prompt": "The largest ocean on Earth is the ", "subject": "The largest ocean on Earth is the", "correct_object": "Pacific Ocean", "distractors": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean"]}

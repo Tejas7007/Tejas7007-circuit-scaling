@@ -1,0 +1,6 @@
+base,target,missing,top_k,mean_frac_rank
+pythia-70m,pythia-160m,0,20,0.8698630136986301
+pythia-160m,pythia-410m,0,20,0.8602941176470587
+pythia-410m,pythia-1b,0,20,0.8389830508474578
+pythia-160m,opt-125m,17,20,0.5
+pythia-410m,gpt2-medium,16,20,0.6652542372881356

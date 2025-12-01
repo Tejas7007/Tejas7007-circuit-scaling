@@ -8,101 +8,263 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Dynamic: license-file
 
-# Circuit Scaling: How Transformer Circuits Evolve with Model Size
+# Circuit-Scaling: How Transformer Circuits Evolve with Model Size
 
-**One‑liner:** A cross‑size, cross‑species causal map of two underexplored mechanisms in transformers — **copy‑suppression** (inhibitory heads) and **subject–verb agreement (SVA)** — with IOI/induction used only as **methodological controls**.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-## Motivation
-Almost all circuit analyses probe a **single** model size (often GPT‑2 small). We ask: **Do circuits persist, migrate, or reorganize as models scale?** If conserved, interpretability may **generalize** across families. If reorganized, we learn **why** bigger models generalize better.
+**Author:** Tejas Dahiya (University of Wisconsin–Madison)  
+**Status:** Research in progress — targeting submission to NeurIPS / ICLR / ICML
 
-## Targets (ranked)
-1. **Copy‑suppression (“negative”) heads** — hypothesized to inhibit tempting-but-wrong continuations. *Novel centerpiece.*
-2. **Subject‑Verb Agreement (SVA)** — circuits that carry subject number and select the correct verb form. *Primary science angle.*
-3. **IOI / Induction** — replicated briefly as **controls** for methods validation.
-
-## Model Suites
-- **Primary (clean scaling):** *Pythia* 70M → 12B (same data/order; ideal for scaling comparisons).
-- **Cross‑species checks:** GPT‑2 (S→XL) and a modern open model (e.g., Llama‑3.x‑3B/8B).
-
-## Methods
-- **Localization:** head ranking by behavioral signature (e.g., reduced wrong‑copy logit for copy‑suppression; DLA at verb for SVA).
-- **Causal tests:** head ablation, activation/path patching; (optional) causal scrubbing.
-- **Cross‑size alignment:** QK/OV subspace similarity (CCA/Procrustes), attention‑pattern correlation, bipartite head matching.
-- **Behavioral linkage:** regress *circuit strength* → *task accuracy* per size.
-- **SAEs (stretch):** align sparse features across sizes to test feature‑level conservation.
-
-## Repo Layout
-```
-circuit-scaling/
-├─ README.md
-├─ LICENSE
-├─ CITATION.cff
-├─ .gitignore
-├─ environment.yml
-├─ pyproject.toml
-├─ Makefile
-├─ src/circuitscaling/
-│  ├─ __init__.py
-│  ├─ datasets.py            # IOI templates, SVA minimal pairs, synthetic deceptive repeats
-│  ├─ models.py              # model loading (Pythia/GPT‑2/Llama), hooks, utils
-│  ├─ scoring.py             # head ranking metrics for copy‑suppression & SVA
-│  ├─ patching.py            # activation/path patching helpers (TransformerLens)
-│  ├─ alignment.py           # head alignment (QK/OV CCA), attention corr, bipartite matching
-│  ├─ metrics.py             # Δloss attribution, DLA, report builders
-│  ├─ viz.py                 # plots for layer migration, attribution vs size
-│  └─ utils.py               # config, caching, reproducibility
-├─ scripts/
-│  ├─ run_copy_suppression_scan.py
-│  ├─ run_sva_scan.py
-│  ├─ run_ioi_control.py
-│  └─ align_heads_across_sizes.py
-├─ notebooks/
-│  ├─ 01_copy_suppression_exploration.ipynb   # optional
-│  ├─ 02_sva_exploration.ipynb                # optional
-│  └─ 03_alignment_reports.ipynb              # optional
-├─ data/                # (generated) prompts, results, caches
-├─ results/             # figures, tables
-└─ tests/
-   ├─ test_datasets.py
-   ├─ test_scoring.py
-   └─ test_alignment.py
-```
-
-## Quickstart
-```bash
-# 1) Create env
-conda env create -f environment.yml
-conda activate circuit-scaling
-
-# 2) (Optional) Enable HuggingFace caching
-export HF_HOME=$HOME/.cache/huggingface
-export TRANSFORMERS_CACHE=$HF_HOME/transformers
-
-# 3) Copy‑suppression head scan on Pythia 410M / 1B / 2.8B
-python scripts/run_copy_suppression_scan.py --models pythia-410m pythia-1b pythia-2.8b --n_prompts 2000
-
-# 4) SVA scan
-python scripts/run_sva_scan.py --models pythia-410m pythia-1b pythia-2.8b --n_prompts 5000
-
-# 5) Cross‑size alignment report
-python scripts/align_heads_across_sizes.py --feature copy_suppression --models pythia-410m pythia-1b pythia-2.8b
-```
-
-## Reproducibility
-- Deterministic seeds, pinned package versions, stored prompt dumps.
-- Each run writes a JSON summary to `results/` and plots to `results/figures/`.
-
-## Planned Experiments
-- **E1 (Main):** Copy‑suppression scaling on Pythia ladder → quantify head count, layer migration, Δloss attribution.
-- **E2 (Main):** SVA scaling on Pythia ladder → quantify DLA at verb, writer/reader sets, migration.
-- **E3 (Control):** IOI replication → validate pipeline; measure inhibitory coupling with main circuits.
-- **E4 (Species):** Replicate E1/E2 on GPT‑2 (S→XL) + Llama‑3.x‑3B/8B.
-- **E5 (Stretch):** SAE feature alignment across sizes.
-
-## Contributing
-See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. PRs welcome (notebooks, datasets, refactors, analyses).
+> A cross-size, cross-family causal analysis showing how functional transformer circuits (IOI, Anti-Repeat, Copy-Suppression) strengthen, migrate, and organize as model size increases from 70M → 1B+ parameters.
 
 ---
 
-*Maintainers:* Tejas Dahiya (UW‑Madison) & collaborators.  
-*License:* MIT.
+## Overview
+
+Most interpretability research analyzes only a single model size (e.g., GPT-2 Small). This project answers a deeper question:
+
+> **Do functional transformer circuits persist, strengthen, or reorganize as model size increases?**
+
+We study scaling behavior across **GPT-2**, **Pythia**, **GPT-Neo**, and **OPT** families, focusing on:
+
+- **IOI (Induction-like) heads** — Indirect Object Identification circuits
+- **Anti-Repeat / Copy-Suppression heads** — Repetition inhibition mechanisms
+- **Shared directional heads** — Dual-function attention patterns
+- **Layer migration across sizes** — How circuits relocate with scale
+- **Causal functional validation** — Directional influence verification
+- **Novel ablation tests** — Hero-Heads vs Random Heads comparison
+
+All experiments conducted using [TransformerLens](https://github.com/neelnanda-io/TransformerLens).
+
+---
+
+## Key Findings
+
+| Finding | Description |
+|---------|-------------|
+| 🔬 **Cross-family scaling laws** | IOI ↔ Anti-Repeat correlations evolve predictably with parameter count |
+| 🧠 **Dual-function heads exist** | A subset of heads perform both IOI and anti-repeat tasks |
+| 📈 **Strong heads get stronger** | Head magnitude scales with model size |
+| 🎯 **Hero-head ablation** | Functional heads show significantly higher ablation impact than random baselines |
+
+---
+
+## Repository Structure
+
+```
+circuit-scaling/
+├── paper/
+│   ├── figs/           # All figures (PNG/PDF)
+│   ├── tables/         # CSV results from experiments
+│   └── notes/          # High-level findings & paper outline
+├── scripts/            # Experiment scripts
+├── src/                # Core analysis modules
+├── results/            # Raw pipeline outputs
+├── environment.yml     # Conda environment
+└── README.md
+```
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/Tejas7007/circuit-scaling.git
+cd circuit-scaling
+
+conda env create -f environment.yml
+conda activate circuit-scaling
+```
+
+---
+
+## Reproducing All Experiments
+
+### 1. IOI & Anti-Repeat Strength Scaling
+```bash
+python scripts/run_joint_head_scan.py
+```
+
+### 2. Causal Tracing
+```bash
+python scripts/run_causal_tracing.py
+```
+
+### 3. Hero-Head Ablation (Novel)
+```bash
+python scripts/ablate_hero_heads_vs_random.py
+python scripts/summarize_ablation_results.py
+```
+
+### 4. Generate Tables & Figures
+```bash
+python scripts/summarize_head_categories.py
+python scripts/summarize_scaling_correlations.py
+```
+
+---
+
+## Figures
+
+All figures stored in `paper/figs/`.
+
+### 1. Cross-Family Correlation vs Model Size
+
+Shows how IOI ↔ Anti-Repeat correlations evolve across GPT-2, GPT-Neo, Pythia, and OPT.
+
+![Cross-Family Correlation](./paper/figs/corr_vs_scale_cross_family.png)
+
+### 2. Strong Head Scaling Law
+
+Demonstrates that strong heads become stronger, sharper, and more numerous with scale.
+
+![Strong Head Scaling](./paper/figs/strong_head_scaling.png)
+
+### 3. Phase-Space Plot Across All Heads (720+)
+
+A unified 2D projection of all heads: IOI-dominant, Anti-Repeat dominant, Shared, and Weak.
+
+![Phase Space](./paper/figs/all_heads_phase_space.png)
+
+### 4. Family-Grid Visualization
+
+Each subplot contains hundreds of heads mapped into ΔIOI vs ΔAnti-repeat space.
+
+![Family Grid](./paper/figs/family_grid.png)
+
+### 5. Per-Model Layer Histograms
+
+| GPT-Neo-125M | GPT-2 |
+|:------------:|:-----:|
+| ![GPT-Neo-125M](./paper/figs/layer_hist_gpt-neo_gpt-neo-125M.png) | ![GPT-2](./paper/figs/layer_hist_gpt2_gpt2.png) |
+
+| GPT-2 Medium | GPT-2 Large |
+|:------------:|:-----------:|
+| ![GPT-2 Medium](./paper/figs/layer_hist_gpt2_gpt2-medium.png) | ![GPT-2 Large](./paper/figs/layer_hist_gpt2_gpt2-large_tau003.png) |
+
+| Pythia-70M | Pythia-160M | Pythia-410M | Pythia-1B |
+|:----------:|:-----------:|:-----------:|:---------:|
+| ![Pythia-70M](./paper/figs/layer_hist_pythia_pythia-70m.png) | ![Pythia-160M](./paper/figs/layer_hist_pythia_pythia-160m.png) | ![Pythia-410M](./paper/figs/layer_hist_pythia_pythia-410m.png) | ![Pythia-1B](./paper/figs/layer_hist_pythia_pythia-1b.png) |
+
+| OPT-125M |
+|:--------:|
+| ![OPT-125M](./paper/figs/layer_hist_opt_opt-125m.png) |
+
+### 6. ΔIOI vs ΔAnti Scatter Plots
+
+| GPT-2 | GPT-2 Medium | GPT-2 Large |
+|:-----:|:------------:|:-----------:|
+| ![GPT-2](./paper/figs/gpt2_gpt2_delta_scatter.png) | ![GPT-2 Medium](./paper/figs/gpt2_gpt2-medium_delta_scatter.png) | ![GPT-2 Large](./paper/figs/gpt2_gpt2-large_delta_scatter.png) |
+
+| Pythia-70M | Pythia-160M | Pythia-410M | Pythia-1B |
+|:----------:|:-----------:|:-----------:|:---------:|
+| ![Pythia-70M](./paper/figs/pythia_pythia-70m_delta_scatter.png) | ![Pythia-160M](./paper/figs/pythia_pythia-160m_delta_scatter.png) | ![Pythia-410M](./paper/figs/pythia_pythia-410m_delta_scatter.png) | ![Pythia-1B](./paper/figs/pythia_pythia-1b_delta_scatter.png) |
+
+| GPT-Neo-125M | OPT-125M |
+|:------------:|:--------:|
+| ![GPT-Neo-125M](./paper/figs/gpt-neo_gpt-neo-125M_delta_scatter.png) | ![OPT-125M](./paper/figs/opt_opt-125m_delta_scatter.png) |
+
+### 7. Causal Tracing Validation
+
+Causally validates directional influence of strong heads.
+
+| IOI Causal Tracing | Anti-Repeat Causal Tracing |
+|:------------------:|:--------------------------:|
+| ![IOI Causal](./paper/figs/hero_head_causal_scatter_ioi.png) | ![Anti Causal](./paper/figs/hero_head_causal_scatter_anti.png) |
+
+### 8. Hero-Head vs Random Ablation (Novel Experiment)
+
+Ablating identified "hero heads" causes a predictable performance drop, unlike random heads — strong evidence of functional circuits.
+
+![Hero vs Random Ablation](./paper/figs/gpt2_gpt2-large_hero_vs_random_ablation.png)
+
+---
+
+## Data Tables
+
+```
+paper/tables/
+├── corr_vs_scale_cross_family.csv      # Correlation scaling data
+├── head_category_summary.csv           # Head type distributions
+├── hero_head_causal_summary.csv        # Causal tracing + head strengths
+├── hero_heads_for_paper.csv            # Top functional heads classified
+├── hero_vs_random_ablation_summary.csv # Ablation experiment results
+└── joint_ioi_anti_repeat_heads.csv     # Unified ΔIOI and ΔAnti metrics
+```
+
+---
+
+## Models Studied
+
+| Family | Models | Parameters |
+|--------|--------|------------|
+| **GPT-2** | gpt2, gpt2-medium, gpt2-large, gpt2-xl | 124M – 1.5B |
+| **Pythia** | pythia-70m, pythia-160m, pythia-410m, pythia-1b, pythia-1.4b, pythia-2.8b | 70M – 2.8B |
+| **OPT** | opt-125m, opt-350m, opt-1.3b, opt-2.7b | 125M – 2.7B |
+| **GPT-Neo** | gpt-neo-125m, gpt-neo-1.3b, gpt-neo-2.7b | 125M – 2.7B |
+
+---
+
+## Paper Outline
+
+### 1. Introduction
+- Why scaling analysis matters for interpretability
+- Gap in existing literature
+- Contributions
+
+### 2. Methods
+- Head influence metrics (ΔIOI, ΔAnti construction)
+- Causal tracing framework
+- Ablation methodology
+- Cross-family comparison approach
+
+### 3. Results
+- Scaling law for head strength
+- Migration of IOI/Anti heads across layers
+- Cross-family conservation patterns
+- Phase-space clustering
+- Causal directional influence
+- Novel ablation: Hero-Heads vs Random
+
+### 4. Discussion
+- Circuit specialization with scale
+- Emergence of strong inhibitory heads
+- Implications for mechanistic interpretability
+
+### 5. Limitations
+
+### 6. Future Work
+- Extension to modern models (Llama-3.x, Gemma)
+- SAE-aligned feature scaling
+- Induction/copy-suppression interaction analysis
+
+### 7. Appendix
+- All figures, tables, prompt templates, hyperparameters
+
+---
+
+## Citation
+
+```bibtex
+@misc{dahiya2025circuitscaling,
+  author       = {Dahiya, Tejas},
+  title        = {Circuit-Scaling: How Transformer Circuits Evolve with Model Size},
+  year         = {2025},
+  publisher    = {GitHub},
+  howpublished = {\url{https://github.com/Tejas7007/circuit-scaling}}
+}
+```
+
+---
+
+## Acknowledgements
+
+- [TransformerLens](https://github.com/neelnanda-io/TransformerLens) (Nanda et al.)
+- [HuggingFace Transformers](https://huggingface.co/) for model weights
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
